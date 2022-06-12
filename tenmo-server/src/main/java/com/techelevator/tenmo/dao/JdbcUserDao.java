@@ -45,6 +45,20 @@ public class JdbcUserDao implements UserDao {
         return users;
     }
 
+    public BigDecimal viewCurrentBalance(long id) {
+        BigDecimal balance = null;
+        String sql = "Select t.user_id, balance from account" +
+                "JOIN tenmo_user t using (user_id)" +
+                "where t.user_id = ?;";
+        try {
+        balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
+
+        } catch (DataAccessException e) {
+            System.out.println("Error accessing database");
+        }
+        return balance;
+    }
+
     @Override
     public User findByUsername(String username) throws UsernameNotFoundException {
         String sql = "SELECT user_id, username, password_hash FROM tenmo_user WHERE username ILIKE ?;";
