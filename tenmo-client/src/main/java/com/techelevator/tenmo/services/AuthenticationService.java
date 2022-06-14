@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.services;
 
+import com.techelevator.tenmo.model.User;
 import com.techelevator.util.BasicLogger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
 import com.techelevator.tenmo.model.UserCredentials;
+
+import java.math.BigDecimal;
+
 
 public class AuthenticationService {
 
@@ -51,5 +55,13 @@ public class AuthenticationService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         return new HttpEntity<>(credentials, headers);
+    }
+
+    public User balance(String token, long id) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<User> response = restTemplate.exchange(baseUrl + "account/balance/" + id, HttpMethod.GET, entity,User.class);
+        return response.getBody();
     }
 }

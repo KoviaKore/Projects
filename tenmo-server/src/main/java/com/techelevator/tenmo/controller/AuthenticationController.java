@@ -3,6 +3,7 @@ package com.techelevator.tenmo.controller;
 import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -56,9 +57,10 @@ public class AuthenticationController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User registration failed.");
         }
     }
-    @GetMapping(value = "/balance")
-    public BigDecimal viewCurrentBalance(User user) {
-        return userDao.viewCurrentBalance(user.getId());
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping(path = "account/balance/{id}")
+    public User viewCurrentBalance(@RequestParam long id) {
+        return userDao.viewCurrentBalance(id);
     }
 
 
