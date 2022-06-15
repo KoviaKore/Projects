@@ -58,8 +58,8 @@ public class AuthenticationController {
         }
     }
     @PreAuthorize("isAuthenticated()")
-    @GetMapping(path = "account/balance/{id}")
-    public User viewCurrentBalance(@RequestParam long id) {
+    @GetMapping(path = "account/{id}/balance")
+    public BigDecimal viewCurrentBalance(@PathVariable long id) {
         return userDao.viewCurrentBalance(id);
     }
 

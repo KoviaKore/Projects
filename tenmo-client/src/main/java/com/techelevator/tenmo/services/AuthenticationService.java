@@ -57,11 +57,5 @@ public class AuthenticationService {
         return new HttpEntity<>(credentials, headers);
     }
 
-    public User balance(String token, long id) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        ResponseEntity<User> response = restTemplate.exchange(baseUrl + "account/balance/" + id, HttpMethod.GET, entity,User.class);
-        return response.getBody();
-    }
+
 }

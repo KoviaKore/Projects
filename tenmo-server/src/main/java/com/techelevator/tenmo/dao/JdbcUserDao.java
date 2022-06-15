@@ -45,22 +45,18 @@ public class JdbcUserDao implements UserDao {
         return users;
     }
 
-    public User viewCurrentBalance(long id) {
-        User user = null;
-        String sql = "Select t.user_id, balance from account" +
-                "JOIN tenmo_user t using (user_id)" +
+    public BigDecimal viewCurrentBalance(long id) {
+        BigDecimal balance = null;
+        String sql = "Select balance from account " +
+                "JOIN tenmo_user t using (user_id) " +
                 "where t.user_id = ?;";
         try {
-         BigDecimal balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
-
-            user.setBalance(balance);
-
-
+         balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, id);
 
         } catch (DataAccessException  | NullPointerException e) {
             System.out.println("Error accessing database");
         }
-        return user;
+        return balance;
     }
 
     @Override

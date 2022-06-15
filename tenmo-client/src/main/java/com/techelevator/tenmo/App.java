@@ -8,9 +8,10 @@ import com.techelevator.tenmo.services.ConsoleService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.web.client.RestTemplate;
+
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 
 public class App {
 
@@ -19,7 +20,7 @@ public class App {
     private final ConsoleService consoleService = new ConsoleService();
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
     private final AccountService accountService = new AccountService(API_BASE_URL);
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final NumberFormat numberFormat = NumberFormat.getCurrencyInstance();
     private AuthenticatedUser currentUser;
 
     public static void main(String[] args) {
@@ -93,8 +94,9 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-        BigDecimal balance = authenticationService.balance(currentUser.getToken(), currentUser.getUser().getId()).getBalance();
-        System.out.println("Your current account balance is: "+ balance);
+        BigDecimal balance;
+        balance = accountService.balance(currentUser.getToken(), currentUser.getUser().getId());
+        System.out.println("Your current account balance is: "+ numberFormat.format(balance));
 	}
 
 	private void viewTransferHistory() {
