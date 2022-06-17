@@ -57,11 +57,7 @@ public class AuthenticationController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User registration failed.");
         }
     }
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping(path = "account/{id}/balance")
-    public BigDecimal viewCurrentBalance(@PathVariable long id) {
-        return userDao.viewCurrentBalance(id);
-    }
+
 
 
 

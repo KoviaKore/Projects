@@ -16,4 +16,6 @@ public interface UserDao {
     boolean create(String username, String password);
 
     BigDecimal viewCurrentBalance(long id);
+
+    boolean send(BigDecimal balance, long user_id, long toId);
 }

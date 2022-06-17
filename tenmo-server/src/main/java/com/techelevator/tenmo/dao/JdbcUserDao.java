@@ -1,12 +1,14 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.User;
+import org.jboss.logging.BasicLogger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -57,6 +59,23 @@ public class JdbcUserDao implements UserDao {
             System.out.println("Error accessing database");
         }
         return balance;
+    }
+
+    @Override
+    public boolean send(BigDecimal amount, long user_id, long toId) {
+        BigDecimal balance = viewCurrentBalance(user_id);
+        if (balance.subtract(amount).compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Insufficient funds");
+
+            BigDecimal newBalance = balance.subtract(amount);
+
+            String sql = "UPDATE account set balance = ?;";
+        int success = jdbcTemplate.update(sql, newBalance);
+        if (success == 1) {
+            String sqlTransfer = "Select "
+        } else
+
+
     }
 
     @Override

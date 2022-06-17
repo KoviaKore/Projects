@@ -1,6 +1,7 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AccountService;
 import com.techelevator.tenmo.services.AuthenticationService;
@@ -110,7 +111,25 @@ public class App {
 	}
 
 	private void sendBucks() {
-		// TODO Auto-generated method stub
+        User[] users = accountService.getUsers(currentUser.getToken());
+        System.out.println("-----------------------------------");
+        System.out.println("Users");
+        System.out.printf("\n %s %18s" ,"ID","Name");
+        System.out.println("-----------------------------------");
+        for (User user: users) {
+            long id = user.getId();
+            String name = user.getUsername();
+            System.out.printf("\n %s %18s", id, name);
+        }
+        System.out.println("---------");
+        int id = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
+        BigDecimal amount = consoleService.promptForBigDecimal("Enter amount: ");
+        if (accountService.send(currentUser.getToken(), currentUser.getUser().getId(), id, amount)) {
+            System.out.println("Transfer Successful!");
+        } else {consoleService.printErrorMessage();}
+
+
+
 		
 	}
 
