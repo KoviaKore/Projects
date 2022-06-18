@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 
 import java.math.BigDecimal;
@@ -17,5 +18,5 @@ public interface UserDao {
 
     BigDecimal viewCurrentBalance(long id);
 
-    boolean send(BigDecimal balance, long user_id, long toId);
+    Transfer send(Transfer transfer, long toId);
 }

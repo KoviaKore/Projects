@@ -1,18 +1,19 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AccountService;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import com.techelevator.tenmo.services.TransferService;
+
 
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.Objects;
 
 public class App {
 
@@ -23,6 +24,7 @@ public class App {
     private final AccountService accountService = new AccountService(API_BASE_URL);
     private final NumberFormat numberFormat = NumberFormat.getCurrencyInstance();
     private AuthenticatedUser currentUser;
+    private final TransferService transferService = new TransferService(API_BASE_URL);
 
     public static void main(String[] args) {
         App app = new App();
@@ -114,24 +116,32 @@ public class App {
         User[] users = accountService.getUsers(currentUser.getToken());
         System.out.println("-----------------------------------");
         System.out.println("Users");
-        System.out.printf("\n %s %18s" ,"ID","Name");
-        System.out.println("-----------------------------------");
-        for (User user: users) {
+        System.out.printf("%s %18s", "ID", "Name");
+        System.out.println("\n-----------------------------------");
+        for (User user : users) {
+            if (user.getId().equals(currentUser.getUser().getId())) {
+                continue;
+            }
             long id = user.getId();
             String name = user.getUsername();
-            System.out.printf("\n %s %18s", id, name);
+            System.out.printf("%s %18s \n", id, name);
         }
-        System.out.println("---------");
+        System.out.println("\n---------");
         int id = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
+        if (id == 0) {mainMenu();}
         BigDecimal amount = consoleService.promptForBigDecimal("Enter amount: ");
-        if (accountService.send(currentUser.getToken(), currentUser.getUser().getId(), id, amount)) {
-            System.out.println("Transfer Successful!");
-        } else {consoleService.printErrorMessage();}
+        while (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            amount = consoleService.promptForBigDecimal("Please enter a valid amount: ");
+        }
+        Transfer result = transferService.send(currentUser.getToken(), currentUser.getUser().getId(), id, amount);
+        System.out.println("Transfer successful! Transfer Id: "+ result.getTransfer_id());
+    }
+
 
 
 
 		
-	}
+
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub

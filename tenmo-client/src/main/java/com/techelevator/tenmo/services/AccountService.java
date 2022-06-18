@@ -23,7 +23,7 @@ public class AccountService {
 
     public User[] getUsers(String token) {
         ResponseEntity<User[]> response =
-                restTemplate.exchange(baseUrl, HttpMethod.GET, makeAuthToken(token), User[].class);
+                restTemplate.exchange(baseUrl + "accounts", HttpMethod.GET, makeAuthToken(token), User[].class);
         return response.getBody();
     }
 
@@ -33,21 +33,7 @@ public class AccountService {
         return response.getBody();
     }
 
-    public boolean send(String token, long fromId, int toId, BigDecimal amount) {
-        String json = "{\"balance\": " +amount+ ",\"user_id\": " + fromId + "}";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(json, headers);
-        boolean success = false;
-        try {
-            restTemplate.exchange(baseUrl + "transferTo/" + toId, HttpMethod.PUT, entity, Void.class);
-            success = true;
-        } catch (RestClientResponseException | ResourceAccessException e) {
-            BasicLogger.log(e.getMessage());
-        }
-        return success;
-    }
+
 
     public HttpEntity<Void> makeAuthToken(String token) {
         HttpHeaders headers = new HttpHeaders();
