@@ -1,6 +1,8 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferDTO;
+import com.techelevator.tenmo.model.TransferHistoryDTO;
 import com.techelevator.tenmo.model.User;
 import org.jboss.logging.BasicLogger;
 import org.springframework.dao.DataAccessException;
@@ -12,14 +14,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
+
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class JdbcUserDao implements UserDao {
 
+
+
     private static final BigDecimal STARTING_BALANCE = new BigDecimal("1000.00");
     private JdbcTemplate jdbcTemplate;
+
+
 
     public JdbcUserDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -70,33 +79,72 @@ public class JdbcUserDao implements UserDao {
         if (balance.subtract(transfer.getBalance()).compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException("Insufficient funds");
 
-            BigDecimal newBalance = balance.subtract(transfer.getBalance());
+        BigDecimal newBalance = balance.subtract(transfer.getBalance());
+        int accountFrom = 0;
+        int accountTo = 0;
 
-            String sql = "UPDATE account set balance = ? where user_id = ?;";
-        int success = jdbcTemplate.update(sql, newBalance, transfer.getTransfer_id());
-        if (success == 1) {
-            String sqlTransfer = "Select user_id, username, y.transfer_type_desc, s.transfer_status_desc, a.balance " +
-                    "From tenmo_user " +
-                    "Join account a using (user_id) " +
-                    "Join transfer t on a.account_id = t.account_to " +
-                    "Join transfer_status s using (transfer_status_id) " +
-                    "join transfer_type y using (transfer_type_id) " +
-                    "where user_id = ?";
-
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sqlTransfer, toId);
-            while (results.next()) {
-                transfer = mapRowToTransfer(results);
+        String sql = "UPDATE account set balance = ? where user_id = ?;";
+        int complete = jdbcTemplate.update(sql, newBalance, transfer.getTransfer_id());
+        if (complete == 1) {
+            String sqlFrom = "Select account_id from account where user_id = ?;";
+            try {
+                accountFrom = jdbcTemplate.queryForObject(sqlFrom, int.class, transfer.getTransfer_id());
+            } catch (DataAccessException | NullPointerException e) {
+                System.out.println("Error in retrieval of account id");
             }
             String sqlSend = "UPDATE account set balance = balance + ? where user_id = ?;";
-            int send = jdbcTemplate.update(sqlSend, transfer.getBalance(), toId);
-            if (send == 1) {
-                return transfer;
-            } else {throw new IllegalArgumentException("Failed balance update sql");}
+            int success = jdbcTemplate.update(sqlSend, transfer.getBalance(), toId);
+            if (success == 1) {
+                String sqlTo = "Select account_id from account where user_id = ?;";
 
-        } else { throw new IllegalArgumentException("Failed transfer sql");}
+                try {
+                    accountTo = jdbcTemplate.queryForObject(sqlTo, int.class,(int) toId);
+                } catch (DataAccessException | NullPointerException e) {
+                    System.out.println("Error in retrieval of account id"); }
+
+                String sqlTransfer = "INSERT into transfer(transfer_type_id, transfer_status_id, account_from, account_to, amount) " +
+                        "VALUES ((Select transfer_type_id from transfer_type where transfer_type_id = ?), " +
+                        "(Select transfer_status_id from transfer_status where transfer_status_id = ?), " +
+                        "(Select account_id from account where account_id = ?), " +
+                        "(Select account_id from account where account_id = ?), " +
+                        "?) Returning transfer_id";
+
+                try {
+                    int transferId = jdbcTemplate.queryForObject(sqlTransfer, int.class, 2, 2, accountFrom, accountTo, transfer.getBalance());
+                    transfer.setTransfer_id(transferId);
+                } catch (NullPointerException e) {
+                    System.out.println("Failed to post transfer information");
+                }
+                return transfer;
+            } else {
+                throw new IllegalArgumentException("Failed sending transaction");
+            }
+        } else {
+            throw new IllegalArgumentException("Failed starting transaction");
+        }
+    }
+
+    @Override
+    public TransferHistoryDTO getHistory(long id) {
+        List<TransferDTO> list = new ArrayList<>();
+        List<TransferHistoryDTO> temp = new ArrayList<>();
+        String sql = "Select * from transfer where account_from = ? or account_to = ?;";
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, id, id);
+        while (rowSet.next()) {
+            TransferHistoryDTO user = mapRowToTransferHistory(rowSet);
+            temp.add(user);
+        }
+        if (temp.size() == 0) {
+            System.out.println("No transactions found for this account");
+        }
+        for (TransferHistoryDTO temps: temp) {
+
+
+        }
 
 
     }
+
 
     @Override
     public User findByUsername(String username) throws UsernameNotFoundException {
@@ -150,4 +198,16 @@ public class JdbcUserDao implements UserDao {
         transfer.setBalance(rs.getBigDecimal("balance"));
         return transfer;
     }
+    private TransferHistoryDTO mapRowToTransferHistory(SqlRowSet rs) {
+        TransferHistoryDTO transfer = new TransferHistoryDTO();
+        transfer.setTransferId(rs.getInt("transfer_id"));
+        transfer.setTransferTypeId(rs.getInt("transfer_type_id"));
+        transfer.setTransferStatusId(rs.getInt("transfer_status_id"));
+        transfer.setAccountFromId(rs.getInt("account_from"));
+        transfer.setAccountToId(rs.getInt("account_to"));
+        transfer.setAmount(rs.getBigDecimal("amount"));
+        return transfer;
+
+    }
+
 }

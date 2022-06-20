@@ -1,6 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferHistoryDTO;
 import com.techelevator.tenmo.model.User;
 
 import java.math.BigDecimal;
@@ -19,4 +20,6 @@ public interface UserDao {
     BigDecimal viewCurrentBalance(long id);
 
     Transfer send(Transfer transfer, long toId);
+
+    TransferHistoryDTO getHistory( long id);
 }

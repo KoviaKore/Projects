@@ -3,6 +3,7 @@ package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferHistoryDTO;
 import com.techelevator.tenmo.model.User;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,5 +35,9 @@ public class AccountController {
     @PutMapping(path = "transfer/{toId}")
     public Transfer send(@RequestBody Transfer transfer, @PathVariable long toId) {
         return userDao.send(transfer, toId);
+    }
+    @GetMapping(path = "history/{id}")
+    public TransferHistoryDTO getHistory(@PathVariable long id) {
+        return userDao.getHistory(id);
     }
 }
