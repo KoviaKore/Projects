@@ -1,7 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
-import com.techelevator.tenmo.model.TransferHistoryDTO;
+import com.techelevator.tenmo.model.TransferDTO;
 import com.techelevator.tenmo.model.User;
 
 import java.math.BigDecimal;
@@ -21,5 +21,5 @@ public interface UserDao {
 
     Transfer send(Transfer transfer, long toId);
 
-    TransferHistoryDTO getHistory( long id);
+    List<TransferDTO> getHistory(long id);
 }

@@ -2,21 +2,16 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.TransferDTO;
-import com.techelevator.tenmo.model.TransferHistoryDTO;
 import com.techelevator.tenmo.model.User;
-import org.jboss.logging.BasicLogger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -125,25 +120,33 @@ public class JdbcUserDao implements UserDao {
     }
 
     @Override
-    public TransferHistoryDTO getHistory(long id) {
+    public List<TransferDTO> getHistory(long id) {
         List<TransferDTO> list = new ArrayList<>();
-        List<TransferHistoryDTO> temp = new ArrayList<>();
-        String sql = "Select * from transfer where account_from = ? or account_to = ?;";
-        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, id, id);
-        while (rowSet.next()) {
-            TransferHistoryDTO user = mapRowToTransferHistory(rowSet);
-            temp.add(user);
+        String sqlOtherUser = "select tr.transfer_id, " +
+                "fu.username as account_from, " +
+                "tu.username as account_to, " +
+                "t.transfer_type_desc as transfer_type, " +
+                "s.transfer_status_desc as transfer_status, " +
+                "amount as amount " +
+                "from transfer tr " +
+                "join account fr on tr.account_from = fr.account_id " +
+                "join account re on tr.account_to = re.account_id " +
+                "join tenmo_user fu on fr.user_id = fu.user_id " +
+                "join tenmo_user tu on re.user_id = tu.user_id " +
+                "join transfer_type t using (transfer_type_id) " +
+                "join transfer_status s using (transfer_status_id) " +
+                "where (account_from in (select account_id from account where user_id = ?)) " +
+                "or (account_to in (select account_id from account where user_id = ?)); ";
+
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sqlOtherUser, id, id);
+            while (results.next()) {
+                TransferDTO listDTO = mapRowToTransferDTO(results);
+                list.add(listDTO);
+            }return list;
         }
-        if (temp.size() == 0) {
-            System.out.println("No transactions found for this account");
-        }
-        for (TransferHistoryDTO temps: temp) {
 
 
-        }
 
-
-    }
 
 
     @Override
@@ -189,25 +192,17 @@ public class JdbcUserDao implements UserDao {
         user.setAuthorities("USER");
         return user;
     }
-    private Transfer mapRowToTransfer(SqlRowSet rs) {
-        Transfer transfer = new Transfer();
-        transfer.setUsername(rs.getString("username"));
-        transfer.setTransfer_id(rs.getInt("transfer_id"));
-        transfer.setTransfer_status_desc(rs.getString("transfer_status_desc"));
-        transfer.setTransfer_type_desc(rs.getString("transfer_type_desc"));
-        transfer.setBalance(rs.getBigDecimal("balance"));
-        return transfer;
-    }
-    private TransferHistoryDTO mapRowToTransferHistory(SqlRowSet rs) {
-        TransferHistoryDTO transfer = new TransferHistoryDTO();
+    private TransferDTO mapRowToTransferDTO(SqlRowSet rs) {
+        TransferDTO transfer = new TransferDTO();
+        transfer.setFromName(rs.getString("account_from"));
+        transfer.setToName(rs.getString("account_to"));
         transfer.setTransferId(rs.getInt("transfer_id"));
-        transfer.setTransferTypeId(rs.getInt("transfer_type_id"));
-        transfer.setTransferStatusId(rs.getInt("transfer_status_id"));
-        transfer.setAccountFromId(rs.getInt("account_from"));
-        transfer.setAccountToId(rs.getInt("account_to"));
+        transfer.setTransactionStatus(rs.getString("transfer_status"));
+        transfer.setTransactionType(rs.getString("transfer_type"));
         transfer.setAmount(rs.getBigDecimal("amount"));
         return transfer;
-
     }
+
+
 
 }
