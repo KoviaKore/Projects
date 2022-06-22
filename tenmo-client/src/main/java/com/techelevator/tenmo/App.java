@@ -10,7 +10,7 @@ import com.techelevator.tenmo.services.TransferService;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.util.Objects;
+import java.util.*;
 
 
 public class App {
@@ -83,7 +83,7 @@ public class App {
             } else if (menuSelection == 3) {
                 viewPendingRequests();
             } else if (menuSelection == 4) {
-                sendBucks();
+                 sendBucks();
             } else if (menuSelection == 5) {
                 requestBucks();
             } else if (menuSelection == 0) {
@@ -107,43 +107,51 @@ public class App {
         System.out.println("Transfers");
         System.out.printf("%s %18s %25s", "ID", "From/To", "Amount");
         System.out.println("\n-------------------------------------------");
-        while (true) {
-            for (TransferHistory transfer : transfers) {
+        Map<Integer, TransferHistory> transferHistory = new TreeMap<>();
+
+
+        for (TransferHistory transfer : transfers) {
                 if (transfer.getToName().equalsIgnoreCase(currentUser.getUser().getUsername())) {
-                    System.out.printf("\n%s %18s %25s", transfer.getTransferId(), "From: " + transfer.getFromName(), transfer.getAmount());
+                    System.out.printf("\n%s %18s %25s", transfer.getTransferId(), "From: " + transfer.getFromName(), numberFormat.format(transfer.getAmount()));
                 } else {
-                    System.out.printf("\n%s %18s %25s", transfer.getTransferId(), "To: " + transfer.getToName(), transfer.getAmount());
+                    System.out.printf("\n%s %18s %25s", transfer.getTransferId(), "To: " + transfer.getToName(), numberFormat.format(transfer.getAmount()));
                 }
-            }
-            System.out.println("\n---------");
+                transferHistory.put(transfer.getTransferId(), transfer);
+                }
+
+        System.out.println("\n---------");
+        while (true) {
             int id = consoleService.promptForInt("Pleas enter transfer ID to view details (0 to cancel): ");
-            for (TransferHistory transfer : transfers) {
-                if (id == 0) {
-                    mainMenu();
-                }
-                if (id != transfer.getTransferId()) {
-                    System.out.println("Invalid ID");
-                    continue;
-                }
-                if (id == transfer.getTransferId()) {
+            if (id == 0) {
+                break;
+            }
+            if (transferHistory.containsKey(id)) {
+                for (Map.Entry<Integer, TransferHistory> item : transferHistory.entrySet()) {
+                    item.getKey().equals(id);
+                    TransferHistory list = item.getValue();
 
                     System.out.println("--------------------------------------------");
                     System.out.println("Transfer Details");
                     System.out.println("--------------------------------------------");
-                    System.out.println("Id: " + transfer.getTransferId());
-                    System.out.println("From: " + transfer.getFromName());
-                    System.out.println("To: " + transfer.getToName());
-                    System.out.println("Type: " + transfer.getTransactionType());
-                    System.out.println("Status: " + transfer.getTransactionStatus());
-                    System.out.println("Amount: " + transfer.getAmount());
+                    System.out.println("Id: " + list.getTransferId());
+                    System.out.println("From: " + list.getFromName());
+                    System.out.println("To: " + list.getToName());
+                    System.out.println("Type: " + list.getTransactionType());
+                    System.out.println("Status: " + list.getTransactionStatus());
+                    System.out.println("Amount: " + numberFormat.format(list.getAmount()));
                     consoleService.pause();
                     mainMenu();
 
                 }
-            }
 
+            } else {
+                System.out.println("Invalid ID");
+            } break;
         }
     }
+
+
+
 
     private void viewPendingRequests() {
         // TODO Auto-generated method stub
@@ -156,39 +164,50 @@ public class App {
         System.out.println("Users");
         System.out.printf("%s %18s", "ID", "Name");
         System.out.println("\n-----------------------------------");
-        while (true) {
-            for (User user : users) {
-                if (user.getId().equals(currentUser.getUser().getId())) {
-                    continue;
-                }
-                System.out.printf("%s %18s \n", user.getId(), user.getUsername());
+        Map<Long, User> userList = new TreeMap<>();
+        for (User user : users) {
+            if (user.getId().equals(currentUser.getUser().getId())) {
+                continue;
             }
-            System.out.println("\n---------");
+            System.out.printf("%s %18s \n", user.getId(), user.getUsername());
+            userList.put(user.getId(), user);
 
-            long id = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
+        }
+        System.out.println("\n---------");
+        long id = -1;
+
+        while (true) {
+            id = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
             //Back to Main Menu
-            for (User user : users) {
-                if (id == 0) {
-                    break;
-                }
-                if (id != user.getId() ^ id == currentUser.getUser().getId()) {
-                    System.out.println("Invalid ID");
-                    continue;
-                }
-                if (id == user.getId()) {
+            if (id == 0) {
+                break;
+            }
 
-                    BigDecimal amount = consoleService.promptForBigDecimal("Enter amount: ");
-                    while (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                        amount = consoleService.promptForBigDecimal("Please enter a valid amount: ");
+            if (!userList.containsKey(id) || id == currentUser.getUser().getId()) {
+                System.out.println("Invalid ID");
+                continue;
+            }
+            if (userList.containsKey(id)) {
+                BigDecimal amount = consoleService.promptForBigDecimal("Enter amount (0 to cancel): ");
+                while (true) {
+                    if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                        amount = consoleService.promptForBigDecimal("Please enter a valid amount (0 to cancel: ");
+                    }
+
+                    if (amount.compareTo(BigDecimal.ZERO) == 0) {
+                        break;
                     }
                     Transfer result = transferService.send(currentUser.getToken(), currentUser.getUser(), id, amount);
                     System.out.println("Transfer successful! Transfer Id: " + result.getTransfer_id());
-                    mainMenu();
+                    break;
                 }
-            }
-
+            } break;
         }
     }
+
+
+
+
 
 
         private void requestBucks() {
