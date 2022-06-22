@@ -127,21 +127,22 @@ public class App {
             }
             if (transferHistory.containsKey(id)) {
                 for (Map.Entry<Integer, TransferHistory> item : transferHistory.entrySet()) {
-                    item.getKey().equals(id);
-                    TransferHistory list = item.getValue();
+                    if (item.getKey().equals(id)) {
+                        TransferHistory list = item.getValue();
 
-                    System.out.println("--------------------------------------------");
-                    System.out.println("Transfer Details");
-                    System.out.println("--------------------------------------------");
-                    System.out.println("Id: " + list.getTransferId());
-                    System.out.println("From: " + list.getFromName());
-                    System.out.println("To: " + list.getToName());
-                    System.out.println("Type: " + list.getTransactionType());
-                    System.out.println("Status: " + list.getTransactionStatus());
-                    System.out.println("Amount: " + numberFormat.format(list.getAmount()));
-                    consoleService.pause();
-                    mainMenu();
 
+                        System.out.println("--------------------------------------------");
+                        System.out.println("Transfer Details");
+                        System.out.println("--------------------------------------------");
+                        System.out.println("Id: " + list.getTransferId());
+                        System.out.println("From: " + list.getFromName());
+                        System.out.println("To: " + list.getToName());
+                        System.out.println("Type: " + list.getTransactionType());
+                        System.out.println("Status: " + list.getTransactionStatus());
+                        System.out.println("Amount: " + numberFormat.format(list.getAmount()));
+                        consoleService.pause();
+                        break;
+                    }
                 }
 
             } else {
